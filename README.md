@@ -35,13 +35,13 @@ Agent 應在本地依序執行以下指令，完成雲端與前端的雙向閉�
     *   啟動登入：`npx clasp login`
     *   *Agent 行動*：從 terminal 輸出中抓取 `🔑 Authorize clasp by visiting this url: ...` 的 Google OAuth 授權連結，將連結完整呈現給使用者，引導其點擊並完成瀏覽器授權。
 3.  **創建 GAS 雲端專案**：
-    *   在本地資料夾執行：`npx clasp create --title "專案資料庫" --type standalone`
+    *   在本地資料夾執行：`npx clasp create-script --title "專案資料庫" --type standalone`
 4.  **強制推送與發佈 Web App**：
     *   執行強推：`npx clasp push -f`
-    *   執行部署：`npx clasp deploy --description "Production Web App"`
+    *   執行部署：`npx clasp create-deployment --description "Production Web App"`
 5.  **動態獲取與注入 API 網址**：
-    *   執行 `npx clasp deployments` 列出部署。
-    *   *Agent 行動*：從輸出中抓取最新的 Deployment ID，組合成網頁應用程式網址：`https://script.google.com/macros/s/<DEPLOYMENT_ID>/exec`，並自動使用檔案修改工具，將此網址回填寫入前端 JS 的 API 變數中。
+    *   執行 `npx clasp list-deployments` 列出部署。
+    *   *Agent 行動*：**不要自己拼網址**（`/macros/s/<id>/exec` 一定是錯的）。執行 `npx clasp open-web-app <deploymentId> --json`，取 API 回傳的 `webApp.url` 給使用者。
 6.  **Netlify 全自動網頁發佈**：
     *   *Agent 行動*：
         1.  呼叫 `netlify-project-services-updater` 工具（`create-new-project` 參數）在使用者帳號下建立新網站，獲取 `site_id`。
@@ -53,7 +53,7 @@ Agent 應在本地依序執行以下指令，完成雲端與前端的雙向閉�
 ## 四、 五大經典踩坑與注意事項
 
 ### 注意事項 1：Google 帳號未啟用 Apps Script API
-*   **狀況**：執行 `clasp create` 時失敗並提示 `User has not enabled the Apps Script API...`。
+*   **狀況**：執行 `clasp create-script` 時失敗並提示 `User has not enabled the Apps Script API...`。
 *   **應變對策**：引導使用者手動點開 [Google Apps Script 使用者設定頁面](https://script.google.com/home/usersettings)，將 **Google Apps Script API** 切換為 **「開啟 (ON)」**，切換完成後再重試。
 
 ### 注意事項 2：前端檔案被推送到 GAS 導致伺服器崩潰
@@ -63,7 +63,7 @@ Agent 應在本地依序執行以下指令，完成雲端與前端的雙向閉�
     1.  確認本地已建立正確的 `.claspignore`。
     2.  對本地 `gas_code.js` 進行微小修改（如加入一行註解），以觸發 Clasp 的本地檔案變更偵測。
     3.  再次執行：`npx clasp push -f`。此時 Clasp 會呼叫 API，以本地未忽略的檔案清單**完全覆寫並替換**雲端專案，遠端的舊前端檔案將被**自動刪除**。
-    4.  重新執行 `npx clasp deploy` 發佈乾淨的新版本。
+    4.  重新執行 `npx clasp create-deployment` 發佈乾淨的新版本。
 
 ### 注意事項 3：腳本權限未經首次執行驗證 (Authorization Required)
 *   **狀況**：前端 fetch 或 curl 請求 Web App 網址時，Google 回傳權限錯誤或顯示「很抱歉，目前無法開啟這個檔案」。
@@ -79,3 +79,5 @@ Agent 應在本地依序執行以下指令，完成雲端與前端的雙向閉�
 *   **狀況**：網頁載入時偶爾會跳出「連線至 Google Sheets 失敗」的跨網域或權限錯誤。
 *   **原因**：瀏覽器同時登入多個 Google 帳號會導致 Apps Script Web App 的 Session 混亂。
 *   **應變對策**：在網頁前端錯誤提示中，或在回覆中，**強烈建議使用者使用「無痕視窗（Incognito）」** 或乾淨的瀏覽器環境開啟 Netlify 網址進行實測，即可 100% 避開多帳號衝突。
+
+> 📌 本文件指令已對齊 **clasp v3**（`create-script`／`create-deployment`／`list-deployments`／`show-authorized-user`／`open-web-app`）。完整對照與六條紅線見 [clasp-gas-skill](https://github.com/mathruffian-dot/clasp-gas-skill)。
